@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
+import { TimeSelect } from "@/components/ui/time-select";
 
 interface Event {
   id: string;
@@ -43,8 +44,18 @@ export default function EventForm({
     return `${year}-${month}-${day}`;
   };
 
+  // 時刻を30分単位に調整する関数
+  const roundToNearestHalfHour = (timeString: string) => {
+    if (!timeString) return "09:00"; // デフォルト時刻
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const roundedMinutes = Math.round(minutes / 30) * 30;
+    const adjustedHours = roundedMinutes >= 60 ? hours + 1 : hours;
+    const finalMinutes = roundedMinutes >= 60 ? 0 : roundedMinutes;
+    return `${adjustedHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`;
+  };
+
   const [date, setDate] = useState(getInitialDate());
-  const [time, setTime] = useState(event?.time || "");
+  const [time, setTime] = useState(event?.time ? roundToNearestHalfHour(event.time) : "09:00");
   const [task, setTask] = useState(event?.task || "");
   const [member, setMember] = useState(event?.member || "");
 
@@ -89,12 +100,9 @@ export default function EventForm({
 
         <div className="space-y-2">
           <Label htmlFor="time" className="text-sm font-medium">時刻</Label>
-          <Input
-            id="time"
-            type="time"
+          <TimeSelect
             value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
+            onValueChange={setTime}
             className="text-sm"
           />
         </div>
