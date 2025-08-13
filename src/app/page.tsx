@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,55 @@ const sampleEvents: Event[] = [
 export default function CalendarApp() {
   const [currentMonth, setCurrentMonth] = useState(new Date(2025, 7));
   const [visibleMembers, setVisibleMembers] = useState(familyMembers.map(m => m.name));
-  const [events, setEvents] = useState<Event[]>(sampleEvents);
-  const [tasks, setTasks] = useState<string[]>(initialTasks);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [tasks, setTasks] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // localStorageからデータを読み込む
+  useEffect(() => {
+    const savedEvents = localStorage.getItem('family-calendar-events');
+    const savedTasks = localStorage.getItem('family-calendar-tasks');
+    
+    if (savedEvents) {
+      try {
+        const parsedEvents = JSON.parse(savedEvents);
+        setEvents(parsedEvents);
+      } catch (error) {
+        console.error('イベントデータの読み込みに失敗しました:', error);
+        setEvents(sampleEvents);
+      }
+    } else {
+      setEvents(sampleEvents);
+    }
+
+    if (savedTasks) {
+      try {
+        const parsedTasks = JSON.parse(savedTasks);
+        setTasks(parsedTasks);
+      } catch (error) {
+        console.error('タスクデータの読み込みに失敗しました:', error);
+        setTasks(initialTasks);
+      }
+    } else {
+      setTasks(initialTasks);
+    }
+  }, []);
+
+  // eventsが変更されたときにlocalStorageに保存
+  useEffect(() => {
+    if (events.length > 0) {
+      localStorage.setItem('family-calendar-events', JSON.stringify(events));
+    }
+  }, [events]);
+
+  // tasksが変更されたときにlocalStorageに保存
+  useEffect(() => {
+    if (tasks.length > 0) {
+      localStorage.setItem('family-calendar-tasks', JSON.stringify(tasks));
+    }
+  }, [tasks]);
 
   const startDate = startOfWeek(startOfMonth(currentMonth));
   const endDate = endOfWeek(endOfMonth(currentMonth));
@@ -122,11 +166,49 @@ export default function CalendarApp() {
     return familyMembers.find(m => m.name === memberName)?.color || "bg-gray-200";
   };
 
+  // データをリセット
+  const handleResetData = () => {
+    if (confirm('すべてのデータをリセットしますか？この操作は元に戻せません。')) {
+      localStorage.removeItem('family-calendar-events');
+      localStorage.removeItem('family-calendar-tasks');
+      setEvents(sampleEvents);
+      setTasks(initialTasks);
+    }
+  };
+
+  // データをエクスポート
+  const handleExportData = () => {
+    const data = {
+      events,
+      tasks,
+      exportDate: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `family-calendar-${format(new Date(), 'yyyy-MM-dd')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg">
         <div className="p-4 pb-2 bg-white sticky top-0 z-10 border-b">
-          <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">家族カレンダー</h1>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold text-gray-800">家族カレンダー</h1>
+            <div className="relative">
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={handleExportData}
+                className="text-xs"
+              >
+                📥 エクスポート
+              </Button>
+            </div>
+          </div>
           
           <div className="flex justify-between items-center mb-4">
             <Button 
