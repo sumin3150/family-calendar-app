@@ -17,7 +17,7 @@ interface Event {
 
 interface EventFormProps {
   selectedDate: Date;
-  event?: Event;
+  event?: Event | null;
   onSave: (event: Omit<Event, 'id'>) => void;
   onCancel: () => void;
   familyMembers: string[];
