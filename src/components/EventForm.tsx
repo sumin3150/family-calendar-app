@@ -69,14 +69,22 @@ export default function EventForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label htmlFor="date" className="text-sm font-medium">日付</Label>
-          <Input
-            id="date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            className="text-sm"
-          />
+          {event ? (
+            // 編集時は日付変更可能
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+              className="text-sm"
+            />
+          ) : (
+            // 新規追加時は日付表示のみ（カレンダーピッカーを開かない）
+            <div className="flex items-center h-10 px-3 py-2 border rounded-md bg-gray-50 text-sm">
+              {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
