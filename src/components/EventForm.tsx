@@ -58,6 +58,7 @@ export default function EventForm({
   const [time, setTime] = useState(event?.time ? roundToNearestHalfHour(event.time) : "09:00");
   const [task, setTask] = useState(event?.task || "");
   const [member, setMember] = useState(event?.member || "");
+  const [isDateEditing, setIsDateEditing] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,21 +80,44 @@ export default function EventForm({
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label htmlFor="date" className="text-sm font-medium">日付</Label>
-          {event ? (
-            // 編集時は日付変更可能
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-              className="text-sm"
-            />
+          <Label className="text-sm font-medium">日付</Label>
+          {isDateEditing ? (
+            // 日付編集モード
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                className="text-sm flex-1"
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsDateEditing(false)}
+                className="px-2"
+              >
+                ✓
+              </Button>
+            </div>
           ) : (
-            // 新規追加時は日付表示のみ（カレンダーピッカーを開かない）
-            <div className="flex items-center h-10 px-3 py-2 border rounded-md bg-gray-50 text-sm">
-              {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
+            // 日付表示モード（カレンダーピッカーを開かない）
+            <div className="flex items-center justify-between h-10 px-3 py-2 border rounded-md bg-gray-50">
+              <span className="text-sm">
+                {new Date(date).getFullYear()}年{new Date(date).getMonth() + 1}月{new Date(date).getDate()}日
+              </span>
+              {event && (
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setIsDateEditing(true)}
+                  className="text-xs h-6 px-2"
+                >
+                  変更
+                </Button>
+              )}
             </div>
           )}
         </div>
