@@ -123,62 +123,101 @@ export default function CalendarApp() {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold mb-6 text-center">家族カレンダー</h1>
-      
-      <div className="flex justify-between items-center mb-4">
-        <Button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>←</Button>
-        <h2 className="text-xl font-bold">{format(currentMonth, "yyyy年M月")}</h2>
-        <Button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>→</Button>
-      </div>
-
-      <div className="flex gap-4 mb-4">
-        {familyMembers.map((member) => (
-          <label key={member.name} className="flex items-center gap-2">
-            <Checkbox
-              checked={visibleMembers.includes(member.name)}
-              onCheckedChange={() => toggleMember(member.name)}
-            />
-            <span className={`px-2 py-1 rounded ${member.color}`}>
-              {member.name}
-            </span>
-          </label>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-2">
-        {["日", "月", "火", "水", "木", "金", "土"].map((day) => (
-          <div key={day} className="text-center font-bold p-2">
-            {day}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg">
+        <div className="p-4 pb-2 bg-white sticky top-0 z-10 border-b">
+          <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">家族カレンダー</h1>
+          
+          <div className="flex justify-between items-center mb-4">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+              className="px-3"
+            >
+              ←
+            </Button>
+            <h2 className="text-lg font-bold text-gray-700">{format(currentMonth, "yyyy年M月")}</h2>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+              className="px-3"
+            >
+              →
+            </Button>
           </div>
-        ))}
-        
-        {days.map((day, idx) => (
-          <Card 
-            key={idx} 
-            className={`min-h-[100px] p-2 cursor-pointer hover:bg-gray-50 ${!isSameMonth(day, currentMonth) ? "opacity-30" : ""}`}
-            onClick={() => handleDateClick(day)}
-          >
-            <CardContent className="p-2">
-              <div className="text-sm font-bold">{format(day, "d")}</div>
-              {getEvents(day).map((event) => (
-                <div
-                  key={event.id}
-                  className={`text-xs mt-1 p-1 rounded cursor-pointer hover:opacity-80 ${getMemberColor(event.member)}`}
-                  onClick={(e) => handleEventClick(event, e)}
-                >
-                  {event.time} {event.task}（{event.member}）
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ))}
+
+          <div className="grid grid-cols-5 gap-1 mb-3">
+            {familyMembers.map((member) => (
+              <label key={member.name} className="flex flex-col items-center gap-1">
+                <Checkbox
+                  checked={visibleMembers.includes(member.name)}
+                  onCheckedChange={() => toggleMember(member.name)}
+                  className="w-4 h-4"
+                />
+                <span className={`px-1 py-0.5 rounded text-xs ${member.color}`}>
+                  {member.name}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-2">
+          <div className="grid grid-cols-7 gap-1">
+            {["日", "月", "火", "水", "木", "金", "土"].map((day, idx) => (
+              <div key={day} className={`text-center font-bold p-2 text-xs ${
+                idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-600'
+              }`}>
+                {day}
+              </div>
+            ))}
+            
+            {days.map((day, idx) => (
+              <Card 
+                key={idx} 
+                className={`min-h-[80px] cursor-pointer hover:bg-gray-50 border transition-colors ${
+                  !isSameMonth(day, currentMonth) ? "opacity-30" : ""
+                }`}
+                onClick={() => handleDateClick(day)}
+              >
+                <CardContent className="p-1">
+                  <div className={`text-sm font-bold mb-1 ${
+                    isSameDay(day, new Date()) ? 'text-blue-600 bg-blue-100 rounded px-1' : 
+                    idx % 7 === 0 ? 'text-red-500' : 
+                    idx % 7 === 6 ? 'text-blue-500' : 'text-gray-700'
+                  }`}>
+                    {format(day, "d")}
+                  </div>
+                  <div className="space-y-0.5">
+                    {getEvents(day).slice(0, 2).map((event) => (
+                      <div
+                        key={event.id}
+                        className={`text-xs p-0.5 rounded cursor-pointer hover:opacity-80 leading-tight ${getMemberColor(event.member)}`}
+                        onClick={(e) => handleEventClick(event, e)}
+                      >
+                        <div className="font-medium">{event.time}</div>
+                        <div className="truncate">{event.task}</div>
+                      </div>
+                    ))}
+                    {getEvents(day).length > 2 && (
+                      <div className="text-xs text-gray-500 text-center">
+                        +{getEvents(day).length - 2}件
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-w-[95vw] w-full mx-2 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg">
               {editingEvent ? "予定を編集" : "予定を追加"}
             </DialogTitle>
           </DialogHeader>

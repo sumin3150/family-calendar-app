@@ -65,31 +65,35 @@ export default function EventForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="date">日付</Label>
-        <Input
-          id="date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="date" className="text-sm font-medium">日付</Label>
+          <Input
+            id="date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+            className="text-sm"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="time" className="text-sm font-medium">時刻</Label>
+          <Input
+            id="time"
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            required
+            className="text-sm"
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="time">時刻</Label>
-        <Input
-          id="time"
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="task">タスク</Label>
+        <Label htmlFor="task" className="text-sm font-medium">タスク</Label>
         <Combobox
           value={task}
           onValueChange={setTask}
@@ -102,14 +106,14 @@ export default function EventForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="member">担当者</Label>
+        <Label htmlFor="member" className="text-sm font-medium">担当者</Label>
         <Select value={member} onValueChange={setMember} required>
-          <SelectTrigger>
+          <SelectTrigger className="text-sm">
             <SelectValue placeholder="担当者を選択" />
           </SelectTrigger>
           <SelectContent>
             {familyMembers.map((memberName) => (
-              <SelectItem key={memberName} value={memberName}>
+              <SelectItem key={memberName} value={memberName} className="text-sm">
                 {memberName}
               </SelectItem>
             ))}
@@ -117,13 +121,15 @@ export default function EventForm({
         </Select>
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          キャンセル
-        </Button>
-        <Button type="submit">
-          {event ? "更新" : "追加"}
-        </Button>
+      <div className="flex flex-col gap-2 pt-3 border-t">
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={onCancel} className="flex-1 text-sm">
+            キャンセル
+          </Button>
+          <Button type="submit" className="flex-1 text-sm">
+            {event ? "更新" : "追加"}
+          </Button>
+        </div>
       </div>
     </form>
   );
