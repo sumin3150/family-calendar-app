@@ -198,7 +198,15 @@ export default function CalendarApp() {
         <div className="p-4 pb-2 bg-white sticky top-0 z-10 border-b">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-800">家族カレンダー</h1>
-            <div className="relative">
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={handleResetData}
+                className="text-xs"
+              >
+                🔄 リロード
+              </Button>
               <Button 
                 size="sm" 
                 variant="ghost"
