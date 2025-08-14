@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
@@ -12,7 +11,19 @@ export async function GET() {
     console.log('URL設定:', url ? 'OK' : 'NG');
     console.log('Key設定:', key ? 'OK' : 'NG');
     
-    // Supabase接続テスト
+    // 環境変数がない場合はテストをスキップ
+    if (!url || !key) {
+      console.log('Supabase環境変数未設定 - テストスキップ');
+      return NextResponse.json({
+        success: true,
+        message: 'Supabase not configured - using LocalStorage',
+        url: url ? 'Set' : 'Missing',
+        key: key ? 'Set' : 'Missing'
+      });
+    }
+    
+    // 環境変数が設定されている場合のみSupabaseテスト実行
+    const { supabase } = await import('@/lib/supabase');
     const { data, error } = await supabase
       .from('tasks')
       .select('count')
