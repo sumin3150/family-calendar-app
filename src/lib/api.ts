@@ -123,3 +123,17 @@ export async function saveTask(task: string): Promise<string> {
     throw error;
   }
 }
+
+export async function deleteTask(taskName: string): Promise<boolean> {
+  try {
+    const response = await fetch(`/api/tasks?task=${encodeURIComponent(taskName)}`, {
+      method: 'DELETE',
+    });
+    
+    const result: ApiResponse<boolean> = await response.json();
+    return result.success;
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    return false;
+  }
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTasks, saveTask } from '@/lib/database-kv';
+import { getTasks, saveTask, deleteTask } from '@/lib/database-kv';
 
 export async function GET() {
   try {
@@ -31,6 +31,29 @@ export async function POST(request: NextRequest) {
     console.error('Error saving task:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to save task' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const taskName = searchParams.get('task');
+    
+    if (!taskName) {
+      return NextResponse.json(
+        { success: false, error: 'Task name is required' },
+        { status: 400 }
+      );
+    }
+    
+    const deleted = await deleteTask(taskName);
+    return NextResponse.json({ success: true, deleted });
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete task' },
       { status: 500 }
     );
   }

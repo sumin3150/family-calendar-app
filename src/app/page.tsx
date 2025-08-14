@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EventForm from "@/components/EventForm";
-import { fetchEvents, fetchTasks, saveEvent, deleteEvent, saveTask } from "@/lib/api";
+import { fetchEvents, fetchTasks, saveEvent, deleteEvent, saveTask, deleteTask } from "@/lib/api";
 
 interface Event {
   id: string;
@@ -170,16 +170,54 @@ export default function CalendarApp() {
   const handleResetData = async () => {
     if (confirm('データを再読み込みしますか？')) {
       try {
+        setStorageStatus('loading');
         const [eventsData, tasksData] = await Promise.all([
           fetchEvents(),
           fetchTasks()
         ]);
         setEvents(eventsData);
         setTasks(tasksData);
+        setStorageStatus('kv'); // リロード後は通常KVまたはローカルデータが利用可能
       } catch (error) {
         console.error('データの再読み込みに失敗しました:', error);
         alert('データの再読み込みに失敗しました。');
+        setStorageStatus('local');
       }
+    }
+  };
+
+  // タスク削除処理
+  const handleDeleteTask = async (taskName: string) => {
+    try {
+      const success = await deleteTask(taskName);
+      if (success) {
+        // タスクリストから削除
+        const updatedTasks = tasks.filter(t => t !== taskName);
+        setTasks(updatedTasks);
+        
+        // そのタスクを使用しているイベントも削除するか確認
+        const eventsUsingTask = events.filter(e => e.task === taskName);
+        if (eventsUsingTask.length > 0) {
+          const deleteRelatedEvents = confirm(
+            `タスク「${taskName}」を使用している${eventsUsingTask.length}件の予定も削除しますか？`
+          );
+          
+          if (deleteRelatedEvents) {
+            // 関連するイベントを削除
+            const deletePromises = eventsUsingTask.map(e => deleteEvent(e.id));
+            await Promise.all(deletePromises);
+            
+            // 画面からも削除
+            const updatedEvents = events.filter(e => e.task !== taskName);
+            setEvents(updatedEvents);
+          }
+        }
+      } else {
+        alert('タスクの削除に失敗しました。');
+      }
+    } catch (error) {
+      console.error('タスク削除エラー:', error);
+      alert('タスクの削除に失敗しました。');
     }
   };
 
@@ -334,6 +372,7 @@ export default function CalendarApp() {
                 onCancel={handleDialogClose}
                 familyMembers={familyMembers.map(m => m.name)}
                 tasks={tasks}
+                onDeleteTask={handleDeleteTask}
               />
               {editingEvent && (
                 <div className="flex justify-start pt-2 border-t">

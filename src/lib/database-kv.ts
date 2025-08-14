@@ -231,6 +231,37 @@ export async function saveTask(task: string): Promise<string> {
   }
 }
 
+export async function deleteTask(taskName: string): Promise<boolean> {
+  try {
+    const tasks = await getTasks();
+    const filteredTasks = tasks.filter(t => t !== taskName);
+    
+    if (filteredTasks.length !== tasks.length) {
+      const kvAvailable = await isKVAvailable();
+      
+      if (kvAvailable) {
+        console.log('KVからタスクを削除中...');
+        await kv.set(TASKS_KEY, filteredTasks);
+      } else {
+        console.log('KV未設定 - LocalStorageからタスクを削除中...');
+      }
+      
+      // 常にLocalStorageからも削除
+      setToLocalStorage(LOCAL_TASKS_KEY, filteredTasks);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('タスク削除エラー:', error);
+    // フォールバック: LocalStorageから削除
+    const tasks = getFromLocalStorage<string[]>(LOCAL_TASKS_KEY, initialTasks);
+    const filteredTasks = tasks.filter(t => t !== taskName);
+    setToLocalStorage(LOCAL_TASKS_KEY, filteredTasks);
+    return filteredTasks.length !== tasks.length;
+  }
+}
+
 export async function getAllData(): Promise<DatabaseData> {
   try {
     const [events, tasks] = await Promise.all([
