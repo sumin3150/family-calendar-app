@@ -14,12 +14,22 @@ interface ApiResponse<T> {
 
 export async function fetchEvents(): Promise<Event[]> {
   try {
-    // クライアントサイドで直接LocalStorageを使用
-    const { getEvents } = await import('@/lib/database-simple');
-    return await getEvents();
+    // Supabaseを優先、フォールバックでLocalStorage
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (url && key) {
+      console.log('[API] Using Supabase backend');
+      const { getEvents } = await import('@/lib/database-supabase');
+      return await getEvents();
+    } else {
+      console.log('[API] Supabase not configured, using LocalStorage');
+      const { getEvents } = await import('@/lib/database-simple');
+      return await getEvents();
+    }
   } catch (error) {
     console.error('Error fetching events:', error);
-    // フォールバック: 初期データを返す
+    // 最終フォールバック: 初期データを返す
     return [
       { id: "1", date: "2025-08-05", time: "09:00", task: "仕事", member: "けんじ" },
       { id: "2", date: "2025-08-06", time: "18:00", task: "サックス", member: "あい" },
@@ -30,9 +40,19 @@ export async function fetchEvents(): Promise<Event[]> {
 
 export async function saveEvent(event: Omit<Event, 'id'> | Event): Promise<Event> {
   try {
-    // クライアントサイドで直接LocalStorageを使用
-    const { saveEvent } = await import('@/lib/database-simple');
-    return await saveEvent(event);
+    // Supabaseを優先、フォールバックでLocalStorage
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (url && key) {
+      console.log('[API] Saving to Supabase backend');
+      const { saveEvent } = await import('@/lib/database-supabase');
+      return await saveEvent(event);
+    } else {
+      console.log('[API] Supabase not configured, saving to LocalStorage');
+      const { saveEvent } = await import('@/lib/database-simple');
+      return await saveEvent(event);
+    }
   } catch (error) {
     console.error('Error saving event:', error);
     throw error;
@@ -41,9 +61,19 @@ export async function saveEvent(event: Omit<Event, 'id'> | Event): Promise<Event
 
 export async function deleteEvent(eventId: string): Promise<boolean> {
   try {
-    // クライアントサイドで直接LocalStorageを使用
-    const { deleteEvent } = await import('@/lib/database-simple');
-    return await deleteEvent(eventId);
+    // Supabaseを優先、フォールバックでLocalStorage
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (url && key) {
+      console.log('[API] Deleting from Supabase backend');
+      const { deleteEvent } = await import('@/lib/database-supabase');
+      return await deleteEvent(eventId);
+    } else {
+      console.log('[API] Supabase not configured, deleting from LocalStorage');
+      const { deleteEvent } = await import('@/lib/database-simple');
+      return await deleteEvent(eventId);
+    }
   } catch (error) {
     console.error('Error deleting event:', error);
     return false;
@@ -52,21 +82,41 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
 
 export async function fetchTasks(): Promise<string[]> {
   try {
-    // クライアントサイドで直接LocalStorageを使用
-    const { getTasks } = await import('@/lib/database-simple');
-    return await getTasks();
+    // Supabaseを優先、フォールバックでLocalStorage
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (url && key) {
+      console.log('[API] Fetching tasks from Supabase backend');
+      const { getTasks } = await import('@/lib/database-supabase');
+      return await getTasks();
+    } else {
+      console.log('[API] Supabase not configured, fetching tasks from LocalStorage');
+      const { getTasks } = await import('@/lib/database-simple');
+      return await getTasks();
+    }
   } catch (error) {
     console.error('Error fetching tasks:', error);
-    // フォールバック: 初期データを返す
+    // 最終フォールバック: 初期データを返す
     return ["仕事", "サックス", "テニス"];
   }
 }
 
 export async function saveTask(task: string): Promise<string> {
   try {
-    // クライアントサイドで直接LocalStorageを使用
-    const { saveTask } = await import('@/lib/database-simple');
-    return await saveTask(task);
+    // Supabaseを優先、フォールバックでLocalStorage
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (url && key) {
+      console.log('[API] Saving task to Supabase backend');
+      const { saveTask } = await import('@/lib/database-supabase');
+      return await saveTask(task);
+    } else {
+      console.log('[API] Supabase not configured, saving task to LocalStorage');
+      const { saveTask } = await import('@/lib/database-simple');
+      return await saveTask(task);
+    }
   } catch (error) {
     console.error('Error saving task:', error);
     throw error;
@@ -75,9 +125,19 @@ export async function saveTask(task: string): Promise<string> {
 
 export async function deleteTask(taskName: string): Promise<boolean> {
   try {
-    // クライアントサイドで直接LocalStorageを使用
-    const { deleteTask } = await import('@/lib/database-simple');
-    return await deleteTask(taskName);
+    // Supabaseを優先、フォールバックでLocalStorage
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (url && key) {
+      console.log('[API] Deleting task from Supabase backend');
+      const { deleteTask } = await import('@/lib/database-supabase');
+      return await deleteTask(taskName);
+    } else {
+      console.log('[API] Supabase not configured, deleting task from LocalStorage');
+      const { deleteTask } = await import('@/lib/database-simple');
+      return await deleteTask(taskName);
+    }
   } catch (error) {
     console.error('Error deleting task:', error);
     return false;
