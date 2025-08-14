@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TaskManagementProps {
   tasks: string[];
@@ -75,73 +74,70 @@ export default function TaskManagement({
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-2">
           {/* 新しいタスクの追加 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">新しいタスクを追加</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAddTask} className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="taskName" className="text-sm font-medium">
-                    タスク名
-                  </Label>
-                  <Input
-                    id="taskName"
-                    value={newTaskName}
-                    onChange={(e) => setNewTaskName(e.target.value)}
-                    placeholder="タスク名を入力"
-                    disabled={isAdding}
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+          <div className="mb-4 p-4 bg-white border rounded-lg">
+            <div className="mb-3">
+              <h2 className="text-lg font-bold text-gray-700">新しいタスクを追加</h2>
+            </div>
+            <form onSubmit={handleAddTask} className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="taskName" className="text-sm font-medium">
+                  タスク名
+                </Label>
+                <Input
+                  id="taskName"
+                  value={newTaskName}
+                  onChange={(e) => setNewTaskName(e.target.value)}
+                  placeholder="タスク名を入力"
                   disabled={isAdding}
-                >
-                  {isAdding ? "追加中..." : "タスクを追加"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+                  className="text-sm"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full text-sm" 
+                disabled={isAdding}
+              >
+                {isAdding ? "追加中..." : "タスクを追加"}
+              </Button>
+            </form>
+          </div>
 
           {/* 既存のタスク一覧 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">
+          <div className="p-4 bg-white border rounded-lg">
+            <div className="mb-3">
+              <h2 className="text-lg font-bold text-gray-700">
                 タスク一覧 ({tasks.length}個)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {tasks.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
-                  タスクがありません
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {tasks.map((task, index) => (
-                    <div 
-                      key={task}
-                      className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50"
+              </h2>
+            </div>
+            {tasks.length === 0 ? (
+              <p className="text-gray-500 text-center py-8 text-sm">
+                タスクがありません
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {tasks.map((task, index) => (
+                  <div 
+                    key={task}
+                    className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50"
+                  >
+                    <span className="flex-1 text-sm font-medium">
+                      {task}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteTask(task)}
+                      className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 h-8 px-2"
                     >
-                      <span className="flex-1 text-sm font-medium">
-                        {task}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteTask(task)}
-                        className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50"
-                      >
-                        🗑️ 削除
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                      🗑️
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
