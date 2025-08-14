@@ -267,38 +267,38 @@ export default function CalendarApp() {
       <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg">
         <div className="p-4 pb-2 bg-white sticky top-0 z-10 border-b">
           <div className="flex justify-between items-center mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">家族カレンダー</h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-gray-800 whitespace-nowrap">家族カレンダー</h1>
               <div className="text-xs text-gray-500 mt-1">
                 {storageStatus === 'loading' && '⏳ 読み込み中...'}
                 {storageStatus === 'kv' && '☁️ クラウド同期'}
                 {storageStatus === 'local' && '📱 ローカル保存（KV未設定）'}
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <Button 
                 size="sm" 
                 variant="ghost"
                 onClick={() => setShowTaskManagement(true)}
-                className="text-xs"
+                className="text-xs px-2"
               >
-                📝 タスク
+                📝
               </Button>
               <Button 
                 size="sm" 
                 variant="ghost"
                 onClick={handleResetData}
-                className="text-xs"
+                className="text-xs px-2"
               >
-                🔄 リロード
+                🔄
               </Button>
               <Button 
                 size="sm" 
                 variant="ghost"
                 onClick={handleExportData}
-                className="text-xs"
+                className="text-xs px-2"
               >
-                📥 エクスポート
+                📥
               </Button>
             </div>
           </div>
