@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EventForm from "@/components/EventForm";
-import { fetchEvents, fetchTasks, saveEvent, deleteEvent, saveTask } from "@/lib/api";
+import TaskManagement from "@/components/TaskManagement";
+import { fetchEvents, fetchTasks, saveEvent, deleteEvent, saveTask, deleteTask } from "@/lib/api";
 
 interface Event {
   id: string;
@@ -43,6 +44,7 @@ export default function CalendarApp() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [storageStatus, setStorageStatus] = useState<'kv' | 'local' | 'loading'>('loading');
+  const [showTaskManagement, setShowTaskManagement] = useState(false);
 
   // APIからデータを読み込む
   useEffect(() => {
@@ -186,6 +188,51 @@ export default function CalendarApp() {
     }
   };
 
+  // タスク管理機能
+  const handleAddTask = async (taskName: string) => {
+    try {
+      await saveTask(taskName);
+      const updatedTasks = await fetchTasks();
+      setTasks(updatedTasks);
+    } catch (error) {
+      console.error('タスク追加エラー:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteTask = async (taskName: string) => {
+    try {
+      const success = await deleteTask(taskName);
+      if (success) {
+        // タスクリストから削除
+        const updatedTasks = await fetchTasks();
+        setTasks(updatedTasks);
+        
+        // そのタスクを使用しているイベントも削除するか確認
+        const eventsUsingTask = events.filter(e => e.task === taskName);
+        if (eventsUsingTask.length > 0) {
+          const deleteRelatedEvents = confirm(
+            `タスク「${taskName}」を使用している${eventsUsingTask.length}件の予定も削除しますか？`
+          );
+          
+          if (deleteRelatedEvents) {
+            // 関連するイベントを削除
+            const deletePromises = eventsUsingTask.map(e => deleteEvent(e.id));
+            await Promise.all(deletePromises);
+            
+            // 画面からも削除
+            const updatedEvents = events.filter(e => e.task !== taskName);
+            setEvents(updatedEvents);
+          }
+        }
+      } else {
+        throw new Error('タスクの削除に失敗しました');
+      }
+    } catch (error) {
+      console.error('タスク削除エラー:', error);
+      throw error;
+    }
+  };
 
   // データをエクスポート
   const handleExportData = () => {
@@ -203,6 +250,18 @@ export default function CalendarApp() {
     URL.revokeObjectURL(url);
   };
 
+  // タスク管理画面を表示
+  if (showTaskManagement) {
+    return (
+      <TaskManagement
+        tasks={tasks}
+        onAddTask={handleAddTask}
+        onDeleteTask={handleDeleteTask}
+        onClose={() => setShowTaskManagement(false)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg">
@@ -217,6 +276,14 @@ export default function CalendarApp() {
               </div>
             </div>
             <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={() => setShowTaskManagement(true)}
+                className="text-xs"
+              >
+                📝 タスク
+              </Button>
               <Button 
                 size="sm" 
                 variant="ghost"
