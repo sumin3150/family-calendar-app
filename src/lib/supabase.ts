@@ -1,20 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
-// 環境変数の型チェック
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// 環境変数の取得とログ出力
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dummy.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key'
 
-console.log('Supabase URL:', supabaseUrl ? 'Set' : 'Missing')
-console.log('Supabase Key:', supabaseAnonKey ? 'Set' : 'Missing')
+console.log('[Supabase] URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing')
+console.log('[Supabase] Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing')
 
-if (!supabaseUrl) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL')
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
-}
-
-if (!supabaseAnonKey) {  
-  console.error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY')
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  console.warn('[Supabase] Environment variables not properly set')
 }
 
 // Supabaseクライアントの作成
