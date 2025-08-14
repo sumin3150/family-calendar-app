@@ -17,6 +17,8 @@ interface DatabaseData {
 // データベーステーブルを初期化
 async function initializeTables() {
   try {
+    console.log('データベース初期化開始...');
+    
     // eventsテーブルの作成
     await sql`
       CREATE TABLE IF NOT EXISTS events (
@@ -48,6 +50,7 @@ async function initializeTables() {
     // 初期データの挿入（データが存在しない場合のみ）
     const existingEvents = await sql`SELECT COUNT(*) as count FROM events`;
     if (existingEvents.rows[0].count === 0) {
+      console.log('初期イベントデータを挿入中...');
       await sql`
         INSERT INTO events (id, date, time, task, member) VALUES 
         ('1', '2025-08-05', '09:00', '仕事', 'けんじ'),
@@ -58,6 +61,7 @@ async function initializeTables() {
 
     const existingTasks = await sql`SELECT COUNT(*) as count FROM tasks`;
     if (existingTasks.rows[0].count === 0) {
+      console.log('初期タスクデータを挿入中...');
       await sql`
         INSERT INTO tasks (task_name) VALUES 
         ('仕事'),
@@ -66,38 +70,45 @@ async function initializeTables() {
         ON CONFLICT (task_name) DO NOTHING
       `;
     }
+    
+    console.log('データベース初期化完了');
   } catch (error) {
     console.error('データベース初期化エラー:', error);
+    throw error;
   }
 }
 
 export async function getEvents(): Promise<Event[]> {
   try {
     await initializeTables();
+    console.log('イベント取得中...');
     const result = await sql`
       SELECT id, date, time, task, member 
       FROM events 
       ORDER BY date, time
     `;
+    console.log(`${result.rows.length}件のイベントを取得`);
     return result.rows as Event[];
   } catch (error) {
     console.error('イベント取得エラー:', error);
-    return [];
+    throw error; // エラーを上位に伝播
   }
 }
 
 export async function getTasks(): Promise<string[]> {
   try {
     await initializeTables();
+    console.log('タスク取得中...');
     const result = await sql`
       SELECT task_name 
       FROM tasks 
       ORDER BY task_name
     `;
+    console.log(`${result.rows.length}件のタスクを取得`);
     return result.rows.map(row => row.task_name);
   } catch (error) {
     console.error('タスク取得エラー:', error);
-    return ['仕事', 'サックス', 'テニス'];
+    throw error; // エラーを上位に伝播
   }
 }
 
@@ -147,14 +158,33 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
 export async function saveTask(task: string): Promise<string> {
   try {
     await initializeTables();
+    console.log(`タスク「${task}」を保存中...`);
     await sql`
       INSERT INTO tasks (task_name) 
       VALUES (${task}) 
       ON CONFLICT (task_name) DO NOTHING
     `;
+    console.log(`タスク「${task}」の保存完了`);
     return task;
   } catch (error) {
     console.error('タスク保存エラー:', error);
+    throw error;
+  }
+}
+
+export async function deleteTask(taskName: string): Promise<boolean> {
+  try {
+    await initializeTables();
+    console.log(`タスク「${taskName}」を削除中...`);
+    const result = await sql`
+      DELETE FROM tasks 
+      WHERE task_name = ${taskName}
+    `;
+    const deleted = (result.rowCount || 0) > 0;
+    console.log(`タスク「${taskName}」の削除${deleted ? '成功' : '失敗'}（行数: ${result.rowCount}）`);
+    return deleted;
+  } catch (error) {
+    console.error('タスク削除エラー:', error);
     throw error;
   }
 }

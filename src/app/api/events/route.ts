@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getEvents, saveEvent, deleteEvent } from '@/lib/database-kv';
+import { getEvents, saveEvent, deleteEvent } from '@/lib/database-supabase';
 
 export async function GET() {
   try {

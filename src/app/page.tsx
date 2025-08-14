@@ -51,6 +51,7 @@ export default function CalendarApp() {
     const loadData = async () => {
       try {
         setStorageStatus('loading');
+        
         const [eventsData, tasksData] = await Promise.all([
           fetchEvents(),
           fetchTasks()
@@ -58,14 +59,14 @@ export default function CalendarApp() {
         setEvents(eventsData);
         setTasks(tasksData);
         
-        // ストレージの状態を確認
-        const isKVWorking = eventsData.length > 0 || tasksData.length > 0;
-        setStorageStatus(isKVWorking ? 'kv' : 'local');
+        // ストレージの状態を確認（データが存在するかと、KVが利用可能かを確認）
+        const hasData = eventsData.length > 0 || tasksData.length > 0;
+        setStorageStatus(hasData ? 'kv' : 'local');
       } catch (error) {
         console.error('データの読み込みに失敗しました:', error);
-        // エラーが発生した場合は空の配列を設定
-        setEvents([]);
-        setTasks(['仕事', 'サックス', 'テニス']); // 最低限のタスクを提供
+        // エラーが発生した場合は初期データを設定
+        setEvents(sampleEvents);
+        setTasks(initialTasks);
         setStorageStatus('local');
       }
     };
@@ -173,13 +174,23 @@ export default function CalendarApp() {
     if (confirm('データを再読み込みしますか？')) {
       try {
         setStorageStatus('loading');
+        
+        // リロード前にLocalStorageをクリアして一貫性を保つ
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('family-calendar-events');
+          localStorage.removeItem('family-calendar-tasks');
+        }
+        
         const [eventsData, tasksData] = await Promise.all([
           fetchEvents(),
           fetchTasks()
         ]);
         setEvents(eventsData);
         setTasks(tasksData);
-        setStorageStatus('kv'); // リロード後は通常KVまたはローカルデータが利用可能
+        
+        // ストレージの状態を正確に判定
+        const isKVWorking = eventsData.length > 0 || tasksData.length > 0;
+        setStorageStatus(isKVWorking ? 'kv' : 'local');
       } catch (error) {
         console.error('データの再読み込みに失敗しました:', error);
         alert('データの再読み込みに失敗しました。');
