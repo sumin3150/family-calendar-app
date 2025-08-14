@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EventForm from "@/components/EventForm";
+import { fetchEvents, fetchTasks, saveEvent, deleteEvent, saveTask } from "@/lib/api";
 
 interface Event {
   id: string;
@@ -45,49 +46,26 @@ export default function CalendarApp() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // localStorageからデータを読み込む
+  // APIからデータを読み込む
   useEffect(() => {
-    const savedEvents = localStorage.getItem('family-calendar-events');
-    const savedTasks = localStorage.getItem('family-calendar-tasks');
-    
-    if (savedEvents) {
+    const loadData = async () => {
       try {
-        const parsedEvents = JSON.parse(savedEvents);
-        setEvents(parsedEvents);
+        const [eventsData, tasksData] = await Promise.all([
+          fetchEvents(),
+          fetchTasks()
+        ]);
+        setEvents(eventsData);
+        setTasks(tasksData);
       } catch (error) {
-        console.error('イベントデータの読み込みに失敗しました:', error);
+        console.error('データの読み込みに失敗しました:', error);
+        // フォールバック：サンプルデータを使用
         setEvents(sampleEvents);
-      }
-    } else {
-      setEvents(sampleEvents);
-    }
-
-    if (savedTasks) {
-      try {
-        const parsedTasks = JSON.parse(savedTasks);
-        setTasks(parsedTasks);
-      } catch (error) {
-        console.error('タスクデータの読み込みに失敗しました:', error);
         setTasks(initialTasks);
       }
-    } else {
-      setTasks(initialTasks);
-    }
+    };
+
+    loadData();
   }, []);
-
-  // eventsが変更されたときにlocalStorageに保存
-  useEffect(() => {
-    if (events.length > 0) {
-      localStorage.setItem('family-calendar-events', JSON.stringify(events));
-    }
-  }, [events]);
-
-  // tasksが変更されたときにlocalStorageに保存
-  useEffect(() => {
-    if (tasks.length > 0) {
-      localStorage.setItem('family-calendar-tasks', JSON.stringify(tasks));
-    }
-  }, [tasks]);
 
   const startDate = startOfWeek(startOfMonth(currentMonth));
   const endDate = endOfWeek(endOfMonth(currentMonth));
@@ -127,32 +105,50 @@ export default function CalendarApp() {
     setIsDialogOpen(true);
   };
 
-  const handleEventSave = (eventData: Omit<Event, 'id'>) => {
-    // 新しいタスクの場合、タスクリストに追加
-    if (!tasks.includes(eventData.task)) {
-      setTasks([...tasks, eventData.task]);
-    }
+  const handleEventSave = async (eventData: Omit<Event, 'id'>) => {
+    try {
+      // 新しいタスクの場合、タスクリストに追加
+      if (!tasks.includes(eventData.task)) {
+        await saveTask(eventData.task);
+        setTasks([...tasks, eventData.task]);
+      }
 
-    if (editingEvent) {
-      setEvents(events.map(e => e.id === editingEvent.id ? { ...eventData, id: editingEvent.id } : e));
-    } else {
-      const newEvent: Event = {
-        ...eventData,
-        id: Date.now().toString()
-      };
-      setEvents([...events, newEvent]);
-    }
-    setIsDialogOpen(false);
-    setSelectedDate(null);
-    setEditingEvent(null);
-  };
+      let savedEvent: Event;
+      if (editingEvent) {
+        // 既存イベントの更新
+        savedEvent = await saveEvent({ ...eventData, id: editingEvent.id });
+        setEvents(events.map(e => e.id === editingEvent.id ? savedEvent : e));
+      } else {
+        // 新規イベントの追加
+        savedEvent = await saveEvent(eventData);
+        setEvents([...events, savedEvent]);
+      }
 
-  const handleEventDelete = () => {
-    if (editingEvent) {
-      setEvents(events.filter(e => e.id !== editingEvent.id));
       setIsDialogOpen(false);
       setSelectedDate(null);
       setEditingEvent(null);
+    } catch (error) {
+      console.error('イベントの保存に失敗しました:', error);
+      alert('予定の保存に失敗しました。再度お試しください。');
+    }
+  };
+
+  const handleEventDelete = async () => {
+    if (editingEvent) {
+      try {
+        const success = await deleteEvent(editingEvent.id);
+        if (success) {
+          setEvents(events.filter(e => e.id !== editingEvent.id));
+          setIsDialogOpen(false);
+          setSelectedDate(null);
+          setEditingEvent(null);
+        } else {
+          alert('予定の削除に失敗しました。');
+        }
+      } catch (error) {
+        console.error('イベントの削除に失敗しました:', error);
+        alert('予定の削除に失敗しました。再度お試しください。');
+      }
     }
   };
 
