@@ -14,7 +14,17 @@ interface ApiResponse<T> {
 
 export async function fetchEvents(): Promise<Event[]> {
   try {
-    const response = await fetch('/api/events');
+    const response = await fetch('/api/events', {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const result: ApiResponse<Event[]> = await response.json();
     
     if (result.success && result.data) {
@@ -24,12 +34,7 @@ export async function fetchEvents(): Promise<Event[]> {
     }
   } catch (error) {
     console.error('Error fetching events:', error);
-    // フォールバックとしてlocalStorageから読み込み
-    const savedEvents = localStorage.getItem('family-calendar-events');
-    if (savedEvents) {
-      return JSON.parse(savedEvents);
-    }
-    return [];
+    throw error; // エラーを上位に伝播させて適切なハンドリングを行う
   }
 }
 
@@ -72,7 +77,17 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
 
 export async function fetchTasks(): Promise<string[]> {
   try {
-    const response = await fetch('/api/tasks');
+    const response = await fetch('/api/tasks', {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const result: ApiResponse<string[]> = await response.json();
     
     if (result.success && result.data) {
@@ -82,12 +97,7 @@ export async function fetchTasks(): Promise<string[]> {
     }
   } catch (error) {
     console.error('Error fetching tasks:', error);
-    // フォールバックとしてlocalStorageから読み込み
-    const savedTasks = localStorage.getItem('family-calendar-tasks');
-    if (savedTasks) {
-      return JSON.parse(savedTasks);
-    }
-    return ['仕事', 'サックス', 'テニス'];
+    throw error; // エラーを上位に伝播させて適切なハンドリングを行う
   }
 }
 

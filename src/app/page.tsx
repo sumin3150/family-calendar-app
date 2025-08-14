@@ -25,10 +25,7 @@ const initialTasks = [
 
 const familyMembers = [
   { name: "けんじ", color: "bg-blue-200" },
-  { name: "あい", color: "bg-pink-200" },
-  { name: "ゆうか", color: "bg-green-200" },
-  { name: "しょうま", color: "bg-yellow-200" },
-  { name: "しゅんすけ", color: "bg-purple-200" }
+  { name: "あい", color: "bg-pink-200" }
 ];
 
 const sampleEvents: Event[] = [
@@ -58,9 +55,9 @@ export default function CalendarApp() {
         setTasks(tasksData);
       } catch (error) {
         console.error('データの読み込みに失敗しました:', error);
-        // フォールバック：サンプルデータを使用
-        setEvents(sampleEvents);
-        setTasks(initialTasks);
+        // エラーが発生した場合は空の配列を設定
+        setEvents([]);
+        setTasks(['仕事', 'サックス', 'テニス']); // 最低限のタスクを提供
       }
     };
 
@@ -162,13 +159,20 @@ export default function CalendarApp() {
     return familyMembers.find(m => m.name === memberName)?.color || "bg-gray-200";
   };
 
-  // データをリセット
-  const handleResetData = () => {
-    if (confirm('すべてのデータをリセットしますか？この操作は元に戻せません。')) {
-      localStorage.removeItem('family-calendar-events');
-      localStorage.removeItem('family-calendar-tasks');
-      setEvents(sampleEvents);
-      setTasks(initialTasks);
+  // データをリセット（データベース操作は行わず、フロントエンドのみリフレッシュ）
+  const handleResetData = async () => {
+    if (confirm('データを再読み込みしますか？')) {
+      try {
+        const [eventsData, tasksData] = await Promise.all([
+          fetchEvents(),
+          fetchTasks()
+        ]);
+        setEvents(eventsData);
+        setTasks(tasksData);
+      } catch (error) {
+        console.error('データの再読み込みに失敗しました:', error);
+        alert('データの再読み込みに失敗しました。');
+      }
     }
   };
 
