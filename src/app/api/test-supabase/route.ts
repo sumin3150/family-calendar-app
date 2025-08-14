@@ -40,7 +40,7 @@ export async function GET() {
     console.error('テスト実行エラー:', error);
     return NextResponse.json({
       success: false,
-      error: error.message || 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }
