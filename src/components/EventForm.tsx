@@ -23,7 +23,6 @@ interface EventFormProps {
   onCancel: () => void;
   familyMembers: string[];
   tasks: string[];
-  onDeleteTask?: (taskName: string) => Promise<void>;
 }
 
 export default function EventForm({ 
@@ -32,8 +31,7 @@ export default function EventForm({
   onSave, 
   onCancel, 
   familyMembers, 
-  tasks,
-  onDeleteTask
+  tasks
 }: EventFormProps) {
   // 初期日付を設定（既存イベントの場合はその日付、新規の場合は選択された日付）
   const getInitialDate = () => {
@@ -135,25 +133,7 @@ export default function EventForm({
       </div>
 
       <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <Label htmlFor="task" className="text-sm font-medium">タスク</Label>
-          {task && tasks.includes(task) && onDeleteTask && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={async () => {
-                if (confirm(`タスク「${task}」を削除しますか？`)) {
-                  await onDeleteTask(task);
-                  setTask('');
-                }
-              }}
-              className="text-xs text-red-600 hover:text-red-800 h-6 px-2"
-            >
-              🗑️ 削除
-            </Button>
-          )}
-        </div>
+        <Label htmlFor="task" className="text-sm font-medium">タスク</Label>
         <Combobox
           value={task}
           onValueChange={setTask}
