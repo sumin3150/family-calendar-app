@@ -42,22 +42,29 @@ export default function CalendarApp() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [storageStatus, setStorageStatus] = useState<'kv' | 'local' | 'loading'>('loading');
 
   // APIからデータを読み込む
   useEffect(() => {
     const loadData = async () => {
       try {
+        setStorageStatus('loading');
         const [eventsData, tasksData] = await Promise.all([
           fetchEvents(),
           fetchTasks()
         ]);
         setEvents(eventsData);
         setTasks(tasksData);
+        
+        // ストレージの状態を確認
+        const isKVWorking = eventsData.length > 0 || tasksData.length > 0;
+        setStorageStatus(isKVWorking ? 'kv' : 'local');
       } catch (error) {
         console.error('データの読み込みに失敗しました:', error);
         // エラーが発生した場合は空の配列を設定
         setEvents([]);
         setTasks(['仕事', 'サックス', 'テニス']); // 最低限のタスクを提供
+        setStorageStatus('local');
       }
     };
 
@@ -197,7 +204,14 @@ export default function CalendarApp() {
       <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg">
         <div className="p-4 pb-2 bg-white sticky top-0 z-10 border-b">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-gray-800">家族カレンダー</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">家族カレンダー</h1>
+              <div className="text-xs text-gray-500 mt-1">
+                {storageStatus === 'loading' && '⏳ 読み込み中...'}
+                {storageStatus === 'kv' && '☁️ クラウド同期'}
+                {storageStatus === 'local' && '📱 ローカル保存（KV未設定）'}
+              </div>
+            </div>
             <div className="flex gap-2">
               <Button 
                 size="sm" 

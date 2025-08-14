@@ -16,6 +16,38 @@ interface DatabaseData {
 
 const EVENTS_KEY = 'family-calendar:events';
 const TASKS_KEY = 'family-calendar:tasks';
+const LOCAL_EVENTS_KEY = 'family-calendar-events';
+const LOCAL_TASKS_KEY = 'family-calendar-tasks';
+
+// KVが利用可能かチェック
+async function isKVAvailable(): Promise<boolean> {
+  try {
+    await kv.ping();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// LocalStorageヘルパー関数
+function getFromLocalStorage<T>(key: string, defaultValue: T): T {
+  if (typeof window === 'undefined') return defaultValue;
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+function setToLocalStorage<T>(key: string, value: T): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error('LocalStorage保存エラー:', error);
+  }
+}
 
 // 初期データ
 const initialEvents: Event[] = [
@@ -28,35 +60,64 @@ const initialTasks: string[] = ["仕事", "サックス", "テニス"];
 
 export async function getEvents(): Promise<Event[]> {
   try {
-    const events = await kv.get<Event[]>(EVENTS_KEY);
-    if (!events) {
-      // 初期データを設定
-      await kv.set(EVENTS_KEY, initialEvents);
-      return initialEvents;
+    const kvAvailable = await isKVAvailable();
+    
+    if (kvAvailable) {
+      console.log('KVからデータを取得中...');
+      const events = await kv.get<Event[]>(EVENTS_KEY);
+      if (!events) {
+        // KVに初期データを設定
+        await kv.set(EVENTS_KEY, initialEvents);
+        return initialEvents;
+      }
+      // 削除されたメンバーのイベントをフィルタリング
+      const filteredEvents = events.filter(event => 
+        event.member === 'けんじ' || event.member === 'あい'
+      );
+      // LocalStorageにもバックアップ
+      setToLocalStorage(LOCAL_EVENTS_KEY, filteredEvents);
+      return filteredEvents;
+    } else {
+      console.log('KV未設定 - LocalStorageからデータを取得中...');
+      const localEvents = getFromLocalStorage<Event[]>(LOCAL_EVENTS_KEY, initialEvents);
+      const filteredEvents = localEvents.filter(event => 
+        event.member === 'けんじ' || event.member === 'あい'
+      );
+      return filteredEvents;
     }
-    // 削除されたメンバーのイベントをフィルタリング
-    const filteredEvents = events.filter(event => 
-      event.member === 'けんじ' || event.member === 'あい'
-    );
-    return filteredEvents;
   } catch (error) {
     console.error('イベント取得エラー:', error);
-    return initialEvents;
+    // フォールバック: LocalStorageから取得
+    const localEvents = getFromLocalStorage<Event[]>(LOCAL_EVENTS_KEY, initialEvents);
+    return localEvents.filter(event => 
+      event.member === 'けんじ' || event.member === 'あい'
+    );
   }
 }
 
 export async function getTasks(): Promise<string[]> {
   try {
-    const tasks = await kv.get<string[]>(TASKS_KEY);
-    if (!tasks) {
-      // 初期データを設定
-      await kv.set(TASKS_KEY, initialTasks);
-      return initialTasks;
+    const kvAvailable = await isKVAvailable();
+    
+    if (kvAvailable) {
+      console.log('KVからタスクを取得中...');
+      const tasks = await kv.get<string[]>(TASKS_KEY);
+      if (!tasks) {
+        // KVに初期データを設定
+        await kv.set(TASKS_KEY, initialTasks);
+        return initialTasks;
+      }
+      // LocalStorageにもバックアップ
+      setToLocalStorage(LOCAL_TASKS_KEY, tasks);
+      return tasks;
+    } else {
+      console.log('KV未設定 - LocalStorageからタスクを取得中...');
+      return getFromLocalStorage<string[]>(LOCAL_TASKS_KEY, initialTasks);
     }
-    return tasks;
   } catch (error) {
     console.error('タスク取得エラー:', error);
-    return initialTasks;
+    // フォールバック: LocalStorageから取得
+    return getFromLocalStorage<string[]>(LOCAL_TASKS_KEY, initialTasks);
   }
 }
 
@@ -76,11 +137,33 @@ export async function saveEvent(event: Event): Promise<Event> {
       events.push(event);
     }
     
-    await kv.set(EVENTS_KEY, events);
+    const kvAvailable = await isKVAvailable();
+    
+    if (kvAvailable) {
+      console.log('KVにイベントを保存中...');
+      await kv.set(EVENTS_KEY, events);
+    } else {
+      console.log('KV未設定 - LocalStorageにイベントを保存中...');
+    }
+    
+    // 常にLocalStorageにもバックアップ
+    setToLocalStorage(LOCAL_EVENTS_KEY, events);
+    
     return event;
   } catch (error) {
     console.error('イベント保存エラー:', error);
-    throw error;
+    // フォールバック: LocalStorageのみに保存
+    const events = await getEvents();
+    const existingIndex = events.findIndex(e => e.id === event.id);
+    
+    if (existingIndex >= 0) {
+      events[existingIndex] = event;
+    } else {
+      events.push(event);
+    }
+    
+    setToLocalStorage(LOCAL_EVENTS_KEY, events);
+    return event;
   }
 }
 
@@ -90,14 +173,28 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
     const filteredEvents = events.filter(e => e.id !== eventId);
     
     if (filteredEvents.length !== events.length) {
-      await kv.set(EVENTS_KEY, filteredEvents);
+      const kvAvailable = await isKVAvailable();
+      
+      if (kvAvailable) {
+        console.log('KVからイベントを削除中...');
+        await kv.set(EVENTS_KEY, filteredEvents);
+      } else {
+        console.log('KV未設定 - LocalStorageからイベントを削除中...');
+      }
+      
+      // 常にLocalStorageからも削除
+      setToLocalStorage(LOCAL_EVENTS_KEY, filteredEvents);
       return true;
     }
     
     return false;
   } catch (error) {
     console.error('イベント削除エラー:', error);
-    return false;
+    // フォールバック: LocalStorageから削除
+    const events = getFromLocalStorage<Event[]>(LOCAL_EVENTS_KEY, []);
+    const filteredEvents = events.filter(e => e.id !== eventId);
+    setToLocalStorage(LOCAL_EVENTS_KEY, filteredEvents);
+    return filteredEvents.length !== events.length;
   }
 }
 
@@ -107,13 +204,30 @@ export async function saveTask(task: string): Promise<string> {
     
     if (!tasks.includes(task)) {
       tasks.push(task);
-      await kv.set(TASKS_KEY, tasks);
+      
+      const kvAvailable = await isKVAvailable();
+      
+      if (kvAvailable) {
+        console.log('KVにタスクを保存中...');
+        await kv.set(TASKS_KEY, tasks);
+      } else {
+        console.log('KV未設定 - LocalStorageにタスクを保存中...');
+      }
+      
+      // 常にLocalStorageにもバックアップ
+      setToLocalStorage(LOCAL_TASKS_KEY, tasks);
     }
     
     return task;
   } catch (error) {
     console.error('タスク保存エラー:', error);
-    throw error;
+    // フォールバック: LocalStorageに保存
+    const tasks = getFromLocalStorage<string[]>(LOCAL_TASKS_KEY, initialTasks);
+    if (!tasks.includes(task)) {
+      tasks.push(task);
+      setToLocalStorage(LOCAL_TASKS_KEY, tasks);
+    }
+    return task;
   }
 }
 
