@@ -169,18 +169,13 @@ export default function CalendarApp() {
     return familyMembers.find(m => m.name === memberName)?.color || "bg-gray-200";
   };
 
-  // データをリセット（データベース操作は行わず、フロントエンドのみリフレッシュ）
+  // データを再読み込み（LocalStorageのデータを保持したまま）
   const handleResetData = async () => {
     if (confirm('データを再読み込みしますか？')) {
       try {
         setStorageStatus('loading');
         
-        // リロード前にLocalStorageをクリアして一貫性を保つ
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('family-calendar-events');
-          localStorage.removeItem('family-calendar-tasks');
-        }
-        
+        // LocalStorageをクリアせずに、データベースから再読み込み
         const [eventsData, tasksData] = await Promise.all([
           fetchEvents(),
           fetchTasks()
