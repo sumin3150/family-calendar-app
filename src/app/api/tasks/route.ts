@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTasks, saveTask, deleteTask } from '@/lib/database-supabase';
+import { getTasks, saveTask, deleteTask } from '@/lib/database-localstorage';
 
 export async function GET() {
   try {
